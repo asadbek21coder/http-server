@@ -6,5 +6,9 @@ type User struct {
 	Email string
 }
 
+type DeleteUserRequest struct {
+	ID int
+}
+
 // DB
 var Users []User

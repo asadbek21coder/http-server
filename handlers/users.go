@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/asadbek21coder/http-server/models"
 )
@@ -33,9 +32,18 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 	// todo develop this logic
 	// 1-vazifa Arraydagi eng katta ID ni topib, uni 1 ga oshirib shu id ni newUser`ga berish`
-	newUser.ID = len(models.Users) + 1
+	if len(models.Users) == 0 {
+		newUser.ID = 1
+	} else {
+		max := models.Users[0].ID
+		for i := 0; i < len(models.Users); i++ {
+			if models.Users[i].ID > max {
+				max = models.Users[i].ID
+			}
+		}
+		newUser.ID = max + 1
+	}
 
-	fmt.Println(newUser)
 	models.Users = append(models.Users, newUser)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -50,22 +58,52 @@ func getAllUsers(w http.ResponseWriter, r *http.Request) {
 
 func updateUser(w http.ResponseWriter, r *http.Request) {
 	var newUser models.User
-	idString := r.URL.Query()["id"][0]
-	id, err := strconv.Atoi(idString)
+	err := json.NewDecoder(r.Body).Decode(&newUser)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	fmt.Println(id)
-	err = json.NewDecoder(r.Body).Decode(&newUser)
-
-	if err != nil {
+	index := -1
+	for i := 0; i < len(models.Users); i++ {
+		if models.Users[i].ID == newUser.ID {
+			index = i
+		}
+		fmt.Println(models.Users[i].ID, newUser.ID)
+	}
+	fmt.Println(index)
+	if index == -1 {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	newUser.ID = id
+	models.Users = append(models.Users[:index], models.Users[index+1:]...)
+	models.Users = append(models.Users, newUser)
 	// 2-vazifa: Shu id`li elementni users dan o'chirib, newUser ni qo'shib qo'ying
-
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	// newUser ni qaytadan json formatga o'girish
+	json.NewEncoder(w).Encode(newUser)
 }
 
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	// 3-vazifa. Delete metodini to'liq yozish
+	var req models.DeleteUserRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	index := -1
+	for i := 0; i < len(models.Users); i++ {
+		if models.Users[i].ID == req.ID {
+			index = i
+		}
+	}
+
+	if index == -1 {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	models.Users = append(models.Users[:index], models.Users[index+1:]...)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "Deleted successfully")
 }

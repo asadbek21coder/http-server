@@ -8,7 +8,7 @@ import (
 )
 
 // PORT
-const PORT = "8080"
+const PORT = "1111"
 
 func main() {
 
@@ -21,6 +21,6 @@ func main() {
 	http.HandleFunc("/users", handlers.HandleUsers)
 
 	// Server
-	fmt.Println("Server is started working on http://localhots:" + PORT)
+	fmt.Println("Server is started working on http://localhost:" + PORT)
 	http.ListenAndServe(":"+PORT, nil)
 }
